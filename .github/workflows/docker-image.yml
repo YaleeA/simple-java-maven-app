@@ -15,35 +15,58 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
-    - name: 'Dependency Review'
-      uses: actions/dependency-review-action@v4
-      with:
-          fail-on-severity: critical
-          allow-licenses: MIT, Apache-2.0, ISC, BSD-2-Clause, 0BSD, NOASSERTION
+   
+    - name: Install Cosign
+      uses: sigstore/cosign-installer@v3.6.0
+      
+    # - name: 'Dependency Review'
+    #   uses: actions/dependency-review-action@v4
+    #   with:
+          # fail-on-severity: critical
+          # allow-licenses: MIT, Apache-2.0, ISC, BSD-2-Clause, 0BSD, NOASSERTION
           # base-ref: ${{ env.BASE_REF }}
           # head-ref: ${{ env.HEAD_REF }}
 
       
       
-    # - name: Set up Docker Buildx
-    #   uses: docker/setup-buildx-action@v2
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
       
-    # - name: Login to Docker Hub
-    #   uses: docker/login-action@v3
-    #   with:
-    #     username: ${{ secrets.DOCKER_USERNAME }}
-    #     password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    # - name: Build and push Docker image
-    #   uses: docker/build-push-action@v6
-    #   with:
-    #     context: .
-    #     file: Dockerfile
-    #     push: true
-    #     tags: |
-    #       ${{ secrets.DOCKER_USERNAME }}/simple_mav
+    - name: Scan Docker image
+      uses: snyk/actions/docker@master
+      continue-on-error: false
+      with:
+        image: ${{secrets.DOCKERHUB_USERNAME}}/simple_mav
+        args: --file=dockerfile --severity-threshold=high --sarif-file-output=snyk.sarif
+      env:
 
+        SNYK_TOKEN: ${{ secrets.SNYC_CONTAINER_SCAN }}
+
+    - name: Build Docker image
+      id: build-docker-image
+      run: |
+        ls -la 
+        docker build . -f Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/simple_mav
+          
+    - name: push Docker image
+      id: push-docker-image
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/simple_mav
+
+    - name: Sign image with a key
+      run: |
+        images="${{secrets.DOCKERHUB_USERNAME}}/simple_mav"
+        cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${images}
+      env:
+        TAGS: ${{ steps.docker_meta.outputs.tags }}
+        COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+        COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+        DIGEST: ${{ steps.build-and-push.outputs.digest }}
  
     # - name: terraform
     #   uses: hashicorp/setup-terraform@v3
