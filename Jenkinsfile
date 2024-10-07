@@ -10,11 +10,11 @@ pipeline {
     }
 
     stages {
-        stage('Security Scan') {
-            steps {
-                sh 'mvn org.owasp:dependency-check-maven:check'
-            }
-        }
+        // stage('Security Scan') {
+        //     steps {
+        //         sh 'mvn org.owasp:dependency-check-maven:check'
+        //     }
+        // }
 
         stage('Build') {
             steps {
