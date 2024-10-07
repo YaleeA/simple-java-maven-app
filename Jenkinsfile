@@ -6,16 +6,14 @@ pipeline {
         skipDefaultCheckout true
     }
 
-    environment {
+       environment {
         MAVEN_OPTS = "-Xms512m -Xmx1024m"
     }
 
     stages {
         stage('Build') {
             steps {
-                // sh 'mvn -B -DskipTests clean package'
-                cache(path: 'maven-repo', key: "maven-${env.BRANCH_NAME}") {
-                    sh 'mvn clean install'
+                sh 'mvn -B -DskipTests clean package'
             }
         }
 
@@ -37,5 +35,4 @@ pipeline {
             }
         }
     }
-}
 }
