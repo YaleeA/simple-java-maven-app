@@ -38,10 +38,12 @@ pipeline {
                     }
                 }
 
-                stage('Integration Tests') {
-                    steps {
-                        sh 'mvn verify'
-                    }
+            }
+
+
+            stage('Integration Tests') {
+                steps {
+                    sh 'mvn verify'
                 }
             }
         }
