@@ -48,4 +48,17 @@ pipeline {
         //     }
         // }
     }
+
+     post {
+        always {
+            echo 'Cleaning up...'
+            deleteDir()
+        }
+
+        failure {
+            mail to: 'yaleeelmaliah@gmail.com',
+                 subject: "Build Failed: ${currentBuild.fullDisplayName}",
+                 body: "The build ${currentBuild.fullDisplayName} has failed."
+        }
+    }
 }
