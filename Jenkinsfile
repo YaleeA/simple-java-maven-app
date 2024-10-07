@@ -3,12 +3,19 @@ pipeline {
 
     options {
         skipStagesAfterUnstable()
+        skipDefaultCheckout true
+    }
+
+    environment {
+        MAVEN_OPTS = "-Xms512m -Xmx1024m"
     }
 
     stages {
         stage('Build') {
             steps {
-                sh 'mvn -B -DskipTests clean package'
+                // sh 'mvn -B -DskipTests clean package'
+                cache(path: 'maven-repo', key: "maven-${env.BRANCH_NAME}") {
+                    sh 'mvn clean install'
             }
         }
 
